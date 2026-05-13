@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Period Tracker</title>
+
+<style>
+  :root {
+    --accent-hue: 335;
+
+    --bg: hsl(var(--accent-hue), 35%, 96%);
+    --text: #333;
+    --card-bg: #ffffff;
+    --card-border: rgba(0, 0, 0, 0.06);
+
+    --heading: hsl(var(--accent-hue), 48%, 52%);
+    --accent: hsl(var(--accent-hue), 48%, 52%);
+    --accent-hover: hsl(var(--accent-hue), 48%, 44%);
+
+    --secondary: #777;
+    --secondary-btn: hsl(var(--accent-hue), 25%, 58%);
+    --secondary-btn-hover: hsl(var(--accent-hue), 25%, 48%);
+
+    --input-bg: #ffffff;
+    --input-text: #333;
+    --input-border: #ccc;
+
+    --stat-bg: hsl(var(--accent-hue), 60%, 96%);
+
+    --day-bg: #ffffff;
+    --day-border: #eee;
+    --day-hover: hsla(var(--accent-hue), 48%, 52%, 0.08);
+
+    --day-name-bg: hsl(var(--accent-hue), 40%, 90%);
+
+    --legend-period: hsl(var(--accent-hue), 70%, 82%);
+    --legend-ongoing: hsl(var(--accent-hue), 70%, 72%);
+    --legend-predicted: hsl(var(--accent-hue), 70%, 94%);
+
+    --history-bg: #fafafa;
+    --history-border: #eee;
+
+    --today-border: hsl(var(--accent-hue), 48%, 52%);
+
+    --modal-bg: rgba(0, 0, 0, 0.45);
+    --modal-panel: #ffffff;
+    --modal-text: #333;
+    --modal-border: rgba(0, 0, 0, 0.08);
+    --modal-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+  }
+
+  html[data-theme="dark"] {
+    --bg: hsl(var(--accent-hue), 20%, 10%);
+    --text: #f4edf4;
+
+    --card-bg: hsl(var(--accent-hue), 18%, 15%);
+    --card-border: rgba(255, 255, 255, 0.08);
+
+    --heading: hsl(var(--accent-hue), 70%, 74%);
+    --accent: hsl(var(--accent-hue), 42%, 50%);
+    --accent-hover: hsl(var(--accent-hue), 70%, 74%);
+
+    --secondary: #8b8690;
+    --secondary-btn: hsl(var(--accent-hue), 15%, 38%);
+    --secondary-btn-hover: hsl(var(--accent-hue), 15%, 58%);
+
+    --input-bg: hsl(var(--accent-hue), 16%, 18%);
+    --input-text: #f4edf4;
+    --input-border: hsl(var(--accent-hue), 14%, 30%);
+
+    --stat-bg: hsl(var(--accent-hue), 20%, 18%);
+
+    --day-bg: hsl(var(--accent-hue), 16%, 18%);
+    --day-border: hsl(var(--accent-hue), 12%, 24%);
+    --day-hover: hsla(var(--accent-hue), 70%, 74%, 0.12);
+
+    --day-name-bg: hsl(var(--accent-hue), 20%, 22%);
+
+    --legend-period: hsl(var(--accent-hue), 45%, 55%);
+    --legend-ongoing: hsl(var(--accent-hue), 65%, 65%);
+    --legend-predicted: hsl(var(--accent-hue), 20%, 28%);
+
+    --history-bg: hsl(var(--accent-hue), 16%, 18%);
+    --history-border: hsl(var(--accent-hue), 12%, 24%);
+
+    --today-border: hsl(var(--accent-hue), 70%, 74%);
+
+    --modal-bg: rgba(0, 0, 0, 0.58);
+    --modal-panel: hsl(var(--accent-hue), 16%, 16%);
+    --modal-text: #f4edf4;
+    --modal-border: rgba(255, 255, 255, 0.08);
+    --modal-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    padding: 20px;
+    color: var(--text);
+    transition:
+      background 0.25s ease,
+      color 0.25s ease;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: auto;
+    width: 100%;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    margin-top: -4px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .theme-btn,
+  .accent-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+  }
+
+  .theme-btn:hover,
+  .accent-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .accent-popup {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    width: 260px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    display: none;
+    z-index: 100;
+  }
+
+  .accent-popup.show {
+    display: block;
+  }
+
+  .accent-popup h3 {
+    margin: 0 0 12px;
+    color: var(--heading);
+    font-size: 16px;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hue-preview {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    border: 2px solid rgba(255,255,255,0.2);
+    flex: 0 0 auto;
+  }
+
+  .hue-value {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--secondary);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .card {
+    background: var(--card-bg);
+    padding: 10px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    transition:
+      background 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  h2 {
+    margin-top: 0;
+    color: var(--heading);
+    margin-bottom: 0;
+  }
+
+  label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+  }
+
+  input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    font-size: 15px;
+    background: var(--input-bg);
+    color: var(--input-text);
+  }
+
+  input[type="date"]:focus {
+    outline: 2px solid hsla(var(--accent-hue), 48%, 52%, 0.25);
+    border-color: var(--accent);
+  }
+
+  .input-active {
+    outline: 2px solid hsla(var(--accent-hue), 48%, 52%, 0.45);
+    border-color: var(--accent);
+  }
+
+  .button-group {
+    margin-top: 8px;
+    height: 33px;
+  }
+
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 10px;
+    transition: background 0.2s ease;
+  }
+
+  button:hover {
+    background: var(--accent-hover);
+  }
+
+  .secondary-btn {
+    background: var(--secondary-btn);
+  }
+
+  .secondary-btn:hover {
+    background: var(--secondary-btn-hover);
+  }
+
+  .stats {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .stat-box {
+    flex: 1;
+    min-width: 200px;
+    background: var(--stat-bg);
+    padding: 0px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid var(--card-border);
+    margin-bottom: 0;
+    transition:
+      background 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .stat-box h3 {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    color: var(--heading);
+  }
+
+  .stat-box p {
+    margin: 6px 0;
+    font-size: 16px;
+  }
+
+  .stat-note {
+    font-size: 13px;
+    color: var(--secondary);
+  }
+
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .calendar-nav {
+    display: flex;
+    gap: 10px;
+  }
+
+  .calendar-nav button {
+    padding: 7px 14px;
+  }
+
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .day-name,
+  .day {
+    text-align: center;
+    border-radius: 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .day-name {
+    padding: 10px 4px;
+    background: var(--day-name-bg);
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .day {
+    min-height: 75px;
+    background: var(--day-bg);
+    border: 1px solid var(--day-border);
+    padding: 8px 4px 14px;
+    position: relative;
+    transition: 0.2s;
+    cursor: pointer;
+    color: var(--text);
+    user-select: none;
+  }
+
+  .day:hover {
+    transform: scale(1.03);
+    background: var(--day-hover);
+  }
+
+  .day-number {
+    font-size: 14px;
+    line-height: 1.1;
+    word-break: break-word;
+    padding-right: 14px;
+  }
+
+  .today {
+    border: 2px solid var(--today-border);
+  }
+
+  .period-day {
+    background: var(--legend-period);
+    color: #7a1230;
+    font-weight: bold;
+  }
+
+  .predicted {
+    background: var(--legend-predicted);
+  }
+
+  .ongoing {
+    background: var(--legend-ongoing);
+    color: white;
+  }
+
+  .note-dot {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.22) inset;
+    pointer-events: none;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+  }
+
+  .history-item {
+    background: var(--history-bg);
+    border: 1px solid var(--history-border);
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .history-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .small-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .empty-day {
+    visibility: hidden;
+  }
+
+  .footer-card {
+    margin-top: 8px;
+  }
+
+  .footer-card p {
+    margin: 8px 0 0;
+    color: var(--secondary);
+    line-height: 1.4;
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .footer-actions button {
+    flex: 1 1 180px;
+  }
+
+  .hidden-file {
+    display: none;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-bg);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    z-index: 999;
+  }
+
+  .modal-overlay.show {
+    display: flex;
+  }
+
+  .note-modal {
+    width: min(520px, calc(100vw - 24px));
+    max-height: min(88vh, 900px);
+    overflow: auto;
+    background: var(--modal-panel);
+    color: var(--modal-text);
+    border: 1px solid var(--modal-border);
+    border-radius: 18px;
+    box-shadow: var(--modal-shadow);
+    padding: 16px;
+  }
+
+  .note-modal h3 {
+    margin: 0 0 6px;
+    color: var(--heading);
+    font-size: 18px;
+  }
+
+  .note-modal .modal-subtitle {
+    margin: 0 0 14px;
+    color: var(--secondary);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .note-preview-label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--input-text);
+    font: inherit;
+    padding: 12px;
+    margin-top: 6px;
+  }
+
+  textarea:focus,
+  input[type="color"]:focus,
+  input[type="range"]:focus {
+    outline: 2px solid hsla(var(--accent-hue), 48%, 52%, 0.35);
+    border-color: var(--accent);
+  }
+
+  input[type="color"] {
+    width: 100%;
+    height: 44px;
+    margin-top: 6px;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    cursor: pointer;
+  }
+
+  .note-color-desktop {
+    display: block;
+  }
+
+  .mobile-note-picker {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    background: var(--history-bg);
+  }
+
+  .mobile-note-preview {
+    width: 100%;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid var(--input-border);
+    margin-bottom: 10px;
+    background: #e86a98;
+  }
+
+  .mobile-note-picker .note-preview-label {
+    margin-top: 10px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .modal-actions button {
+    flex: 1 1 150px;
+  }
+
+  @media (max-width: 700px) {
+    body {
+      padding: 12px;
+    }
+
+    .card {
+      padding: 8px;
+    }
+
+    .day {
+      min-height: 42px;
+      padding: 6px 2px 12px;
+      font-size: 12px;
+    }
+
+    .day-name {
+      padding: 6px 2px;
+      font-size: 11px;
+    }
+
+    .day-number {
+      font-size: 12px;
+      padding-right: 12px;
+    }
+
+    .note-dot {
+      width: 10px;
+      height: 10px;
+      right: 5px;
+      bottom: 5px;
+    }
+
+    .calendar {
+      gap: 3px;
+    }
+
+    .stats {
+      flex-direction: column;
+      margin-bottom: 8px;
+    }
+
+    .top-bar {
+      justify-content: center;
+    }
+
+    .theme-btn,
+    .accent-btn {
+      max-width: 220px;
+      height: 33px;
+      line-height: 13px;
+    }
+
+    .accent-popup {
+      position: relative;
+      top: 0;
+      right: 0;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .note-modal {
+      width: 100%;
+      max-height: 90vh;
+      padding: 14px;
+    }
+
+    .modal-actions button,
+    .footer-actions button {
+      flex: 1 1 100%;
+    }
+
+    .note-color-desktop {
+      display: none;
+    }
+
+    .mobile-note-picker {
+      display: block;
+    }
+  }
+
+@media (min-width: 1000px) {
+  .container {
+    max-width: 2560px;
+    display: grid;
+    grid-template-columns: minmax(450px, 1fr) minmax(500px, 1.2fr);
+    grid-template-areas:
+      "topbar topbar"
+      "input calendar"
+      "topstats calendar"
+      "cyclestats calendar"
+      "footer calendar"
+      "history history";
+    gap: 8px 18px;
+    align-items: start;
+  }
+
+  .top-bar {
+    grid-area: topbar;
+    margin-bottom: 0;
+  }
+
+  .input-card {
+    grid-area: input;
+  }
+
+  .top-stats-card {
+    grid-area: topstats;
+  }
+
+  .cycle-card {
+		margin-top: 0;
+    grid-area: cyclestats;
+  }
+
+  .footer-card {
+    grid-area: footer;
+    margin-top: 0;
+  }
+
+  .history-card {
+    grid-area: history;
+  }
+
+  .calendar-card {
+    grid-area: calendar;
+    align-self: start;
+    position: sticky;
+    top: 12px;
+  }
+
+  .card {
+    margin-bottom: 0;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="top-bar">
+    <button
+      class="theme-btn"
+      id="themeToggle"
+      type="button"
+      aria-label="Toggle theme">
+    </button>
+
+    <button
+      class="accent-btn"
+      id="accentToggle"
+      type="button">
+      Accent Color
+    </button>
+
+    <div class="accent-popup" id="accentPopup">
+      <h3>Accent Hue</h3>
+
+      <div class="slider-row">
+        <div class="hue-preview"></div>
+
+        <input
+          type="range"
+          id="hueSlider"
+          min="0"
+          max="360"
+          value="335">
+      </div>
+
+      <div class="hue-value">
+        Hue: <span id="hueValue">335</span>°
+      </div>
+    </div>
+  </div>
+
+  <div class="card input-card">
+    <h2>Add Period Entry</h2>
+
+    <label>Period Start Date</label>
+    <input type="date" id="startDate">
+
+    <label>Period End Date</label>
+    <input type="date" id="endDate">
+
+    <div class="button-group">
+      <button onclick="savePeriod()">Add entry</button>
+    </div>
+  </div>
+
+  <div class="stats top-stats-card">
+    <div class="stat-box">
+      <h3>Next Predicted Period</h3>
+      <p id="nextPeriod">-</p>
+    </div>
+  </div>
+
+  <div class="card calendar-card">
+    <div class="calendar-header">
+      <h2 id="calendarTitle"></h2>
+
+      <div class="calendar-nav">
+        <button onclick="changeMonth(-1)">◀</button>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="legend">
+
+
+      <div class="legend-item">
+        <div class="legend-color" style="background:var(--legend-ongoing);"></div>
+        Ongoing Period
+      </div>
+
+      <div class="legend-item">
+        <div class="legend-color" style="background:var(--legend-predicted);"></div>
+        Predicted Period
+      </div>
+    </div>
+  </div>
+
+  <div class="card cycle-card">
+    <h2>Cycle Statistics</h2>
+
+    <div class="stats">
+      <div class="stat-box">
+        <h3>Average Cycle</h3>
+        <p id="avgCycle">Add at least 2 entries</p>
+        <p class="stat-note" id="avgCycleNote">Based on user data</p>
+      </div>
+
+      <div class="stat-box">
+        <h3>Average Length</h3>
+        <p id="avgLength">Add a completed period</p>
+        <p class="stat-note" id="avgLengthNote">Based on user data</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card footer-card">
+    <h2>Backup everything</h2>
+    <div class="footer-actions">
+      <button id="exportCsvBtn" type="button">Export CSV</button>
+      <button id="importCsvBtn" class="secondary-btn" type="button">Import CSV</button>
+      <button class="secondary-btn" onclick="clearAllData()">Clear All Data</button>
+      <input
+        id="csvFileInput"
+        class="hidden-file"
+        type="file"
+        accept=".csv,text/csv">
+    </div>
+  </div>
+
+  <div class="card history-card">
+    <h2>Saved Entries</h2>
+    <div id="history"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="noteOverlay" aria-hidden="true">
+  <div class="note-modal" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+    <h3 id="noteModalTitle">Calendar Note</h3>
+    <p class="modal-subtitle" id="noteDateLabel">-</p>
+
+    <label for="noteText" class="note-preview-label">Note</label>
+    <textarea
+      id="noteText"
+      placeholder="Add a note for this day..."></textarea>
+
+    <label for="noteColor" class="note-preview-label note-color-desktop">Circle color</label>
+    <input type="color" id="noteColor" class="note-color-desktop" value="#e86a98" />
+
+    <div class="mobile-note-picker" id="mobileNotePicker">
+      <div class="mobile-note-preview" id="mobileNotePreview"></div>
+
+      <label for="noteHue" class="note-preview-label">Hue</label>
+      <input type="range" id="noteHue" min="0" max="360" value="335" />
+
+      <label for="noteBrightness" class="note-preview-label">Brightness</label>
+      <input type="range" id="noteBrightness" min="20" max="85" value="60" />
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="setDayBtn">Set day</button>
+      <button type="button" id="deleteNoteBtn" class="secondary-btn">Delete note</button>
+      <button type="button" id="closeNoteBtn" class="secondary-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =========================
+  // STORAGE
+  // =========================
+
+  let periods = JSON.parse(localStorage.getItem("periods")) || [];
+  let notes = JSON.parse(localStorage.getItem("periodTrackerNotes")) || {};
+
+  let activeInputId = "startDate";
+  let currentNoteDate = null;
+
+  const THEME_KEY = "periodTrackerTheme";
+  const HUE_KEY = "periodTrackerHue";
+  const NOTES_KEY = "periodTrackerNotes";
+  const NOTE_SATURATION = 72;
+
+  const THEME_LABELS = {
+    auto: "Theme: Auto",
+    light: "Theme: Light",
+    dark: "Theme: Dark"
+  };
+
+  // =========================
+  // STORAGE HELPERS
+  // =========================
+
+  function saveToStorage() {
+    localStorage.setItem("periods", JSON.stringify(periods));
+  }
+
+  function saveNotesToStorage() {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+  }
+
+  // =========================
+  // ACCENT HUE
+  // =========================
+
+  function getStoredHue() {
+    return localStorage.getItem(HUE_KEY) || "335";
+  }
+
+  function getAccentHue() {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue("--accent-hue")
+      .trim();
+
+    const hue = Number(raw);
+    return Number.isFinite(hue) ? hue : 335;
+  }
+
+  function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+
+    let r = 0, g = 0, b = 0;
+
+    if (h >= 0 && h < 60) {
+      r = c; g = x; b = 0;
+    } else if (h < 120) {
+      r = x; g = c; b = 0;
+    } else if (h < 180) {
+      r = 0; g = c; b = x;
+    } else if (h < 240) {
+      r = 0; g = x; b = c;
+    } else if (h < 300) {
+      r = x; g = 0; b = c;
+    } else {
+      r = c; g = 0; b = x;
+    }
+
+    const toHex = n => {
+      const v = Math.round((n + m) * 255);
+      return v.toString(16).padStart(2, "0");
+    };
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  function hexToRgb(hex) {
+    const cleaned = String(hex || "").trim().replace("#", "");
+    if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) return null;
+
+    const value = parseInt(cleaned, 16);
+    return {
+      r: (value >> 16) & 255,
+      g: (value >> 8) & 255,
+      b: value & 255
+    };
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
+
+    if (delta !== 0) {
+      s = delta / (1 - Math.abs(2 * l - 1));
+
+      switch (max) {
+        case r:
+          h = 60 * (((g - b) / delta) % 6);
+          break;
+        case g:
+          h = 60 * (((b - r) / delta) + 2);
+          break;
+        default:
+          h = 60 * (((r - g) / delta) + 4);
+          break;
+      }
+    }
+
+    if (h < 0) h += 360;
+
+    return {
+      h,
+      s: s * 100,
+      l: l * 100
+    };
+  }
+
+  function hexToHsl(hex) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return { h: 335, s: NOTE_SATURATION, l: 60 };
+    return rgbToHsl(rgb.r, rgb.g, rgb.b);
+  }
+
+  function getDefaultNoteColor() {
+    return hslToHex(getAccentHue(), NOTE_SATURATION, 60);
+  }
+
+  function setMobileColorPreview(hex) {
+    const preview = document.getElementById("mobileNotePreview");
+    if (preview) {
+      preview.style.background = hex;
+    }
+  }
+
+  function syncNoteColorUI(hex) {
+    const color = /^#([0-9a-fA-F]{6})$/.test(hex) ? hex : getDefaultNoteColor();
+    const colorInput = document.getElementById("noteColor");
+    const hueInput = document.getElementById("noteHue");
+    const brightnessInput = document.getElementById("noteBrightness");
+
+    if (colorInput) colorInput.value = color;
+
+    const hsl = hexToHsl(color);
+    if (hueInput) hueInput.value = String(Math.round(hsl.h));
+    if (brightnessInput) {
+      const min = Number(brightnessInput.min || 20);
+      const max = Number(brightnessInput.max || 85);
+      const light = Math.min(max, Math.max(min, Math.round(hsl.l)));
+      brightnessInput.value = String(light);
+    }
+
+    setMobileColorPreview(color);
+  }
+
+  function updateMobileColorFromSliders() {
+    const hueInput = document.getElementById("noteHue");
+    const brightnessInput = document.getElementById("noteBrightness");
+
+    const hue = Number(hueInput?.value ?? 335);
+    const brightness = Number(brightnessInput?.value ?? 60);
+
+    const hex = hslToHex(hue, NOTE_SATURATION, brightness);
+    syncNoteColorUI(hex);
+    persistCurrentNote();
+  }
+
+  function applyHue(hue) {
+    document.documentElement.style.setProperty("--accent-hue", hue);
+
+    const slider = document.getElementById("hueSlider");
+    const value = document.getElementById("hueValue");
+    const preview = document.querySelector(".hue-preview");
+
+    if (slider) slider.value = hue;
+    if (value) value.textContent = hue;
+    if (preview) preview.style.background = `hsl(${hue}, 48%, 52%)`;
+
+    const colorInput = document.getElementById("noteColor");
+    if (colorInput && !colorInput.value) {
+      colorInput.value = getDefaultNoteColor();
+    }
+  }
+
+  function saveHue(hue) {
+    localStorage.setItem(HUE_KEY, hue);
+    applyHue(hue);
+    refreshUI();
+  }
+
+  function toggleAccentPopup() {
+    document.getElementById("accentPopup").classList.toggle("show");
+  }
+
+  // =========================
+  // THEME
+  // =========================
+
+  function getStoredTheme() {
+    return localStorage.getItem(THEME_KEY) || "auto";
+  }
+
+  function getSystemTheme() {
+    return window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+
+  function getEffectiveTheme() {
+    const stored = getStoredTheme();
+    return stored === "auto" ? getSystemTheme() : stored;
+  }
+
+  function applyTheme() {
+    const stored = getStoredTheme();
+    const effective = getEffectiveTheme();
+
+    document.documentElement.setAttribute("data-theme", effective);
+
+    const btn = document.getElementById("themeToggle");
+    if (btn) {
+      btn.textContent = THEME_LABELS[stored];
+    }
+  }
+
+  function cycleTheme() {
+    const current = getStoredTheme();
+
+    const next =
+      current === "auto"
+        ? "light"
+        : current === "light"
+        ? "dark"
+        : "auto";
+
+    localStorage.setItem(THEME_KEY, next);
+
+    applyTheme();
+    renderCalendar();
+  }
+
+  function watchSystemTheme() {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handler = () => {
+      if (getStoredTheme() === "auto") {
+        applyTheme();
+        renderCalendar();
+      }
+    };
+
+    if (media.addEventListener) {
+      media.addEventListener("change", handler);
+    } else {
+      media.addListener(handler);
+    }
+  }
+
+  // =========================
+  // DATE HELPERS
+  // =========================
+
+  function parseDate(dateStr) {
+    if (!dateStr) return null;
+
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function normalizeDate(date) {
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+  }
+
+  function getToday() {
+    return normalizeDate(new Date());
+  }
+
+  function getTodayDateString() {
+    const today = getToday();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatDateInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatDate(dateStr) {
+    const date = parseDate(dateStr);
+
+    if (!date) return "-";
+
+    return date.toDateString();
+  }
+
+  function daysBetween(a, b) {
+    const ms = 1000 * 60 * 60 * 24;
+
+    return Math.round(
+      (normalizeDate(b) - normalizeDate(a)) / ms
+    );
+  }
+
+  function isDateInRange(date, start, end) {
+    const d = normalizeDate(date);
+    const s = normalizeDate(start);
+    const e = normalizeDate(end);
+
+    return d >= s && d <= e;
+  }
+
+  // =========================
+  // DEFAULT INPUT DATE
+  // =========================
+
+  function setDefaultDates() {
+    const startInput = document.getElementById("startDate");
+
+    if (!startInput.value) {
+      startInput.value = getTodayDateString();
+    }
+  }
+
+  function setActiveDateInput(id) {
+    activeInputId = id;
+
+    const startInput = document.getElementById("startDate");
+    const endInput = document.getElementById("endDate");
+
+    startInput.classList.toggle(
+      "input-active",
+      id === "startDate"
+    );
+
+    endInput.classList.toggle(
+      "input-active",
+      id === "endDate"
+    );
+  }
+
+  // =========================
+  // SORT
+  // =========================
+
+  function sortPeriods() {
+    periods.sort(
+      (a, b) => parseDate(a.start) - parseDate(b.start)
+    );
+  }
+
+  function getOpenPeriodIndex() {
+    for (let i = periods.length - 1; i >= 0; i--) {
+      if (!periods[i].end) return i;
+    }
+    return -1;
+  }
+
+  // =========================
+  // STATS HELPERS
+  // =========================
+
+  function getCycleInfo() {
+    if (periods.length < 2) {
+      return { average: null, count: 0 };
+    }
+
+    const cycles = [];
+
+    for (let i = 1; i < periods.length; i++) {
+      const prev = parseDate(periods[i - 1].start);
+      const current = parseDate(periods[i].start);
+
+      cycles.push(daysBetween(prev, current));
+    }
+
+    const average = Math.round(
+      cycles.reduce((a, b) => a + b, 0) / cycles.length
+    );
+
+    return {
+      average,
+      count: cycles.length
+    };
+  }
+
+  function getLengthInfo() {
+    const completed = periods.filter(p => p.end);
+
+    if (completed.length === 0) {
+      return { average: null, count: 0 };
+    }
+
+    const lengths = completed.map(p => {
+      return (
+        daysBetween(
+          parseDate(p.start),
+          parseDate(p.end)
+        ) + 1
+      );
+    });
+
+    const average = Math.round(
+      lengths.reduce((a, b) => a + b, 0) / lengths.length
+    );
+
+    return {
+      average,
+      count: completed.length
+    };
+  }
+
+  // =========================
+  // SAVE PERIOD
+  // =========================
+
+  function savePeriod() {
+    const start = document.getElementById("startDate").value;
+    const end = document.getElementById("endDate").value;
+
+    if (!start) {
+      alert("Please enter a start date.");
+      return;
+    }
+
+    const openPeriodIndex = getOpenPeriodIndex();
+
+    if (end) {
+      if (openPeriodIndex >= 0) {
+        const openPeriod = periods[openPeriodIndex];
+        const openStart = parseDate(openPeriod.start);
+        const endDate = parseDate(end);
+
+        if (endDate < openStart) {
+          alert("End date cannot be before the ongoing period start date.");
+          return;
+        }
+
+        openPeriod.end = end;
+        saveToStorage();
+
+        currentMonth = openStart.getMonth();
+        currentYear = openStart.getFullYear();
+
+        document.getElementById("startDate").value = getTodayDateString();
+        document.getElementById("endDate").value = "";
+
+        refreshUI();
+        return;
+      }
+
+      if (parseDate(end) < parseDate(start)) {
+        alert("End date cannot be before start date.");
+        return;
+      }
+
+      periods.push({
+        id: Date.now(),
+        start,
+        end
+      });
+
+      sortPeriods();
+      saveToStorage();
+
+      const startDate = parseDate(start);
+
+      currentMonth = startDate.getMonth();
+      currentYear = startDate.getFullYear();
+
+      document.getElementById("startDate").value = getTodayDateString();
+      document.getElementById("endDate").value = "";
+
+      refreshUI();
+      return;
+    }
+
+    if (openPeriodIndex >= 0) {
+      alert("An ongoing period already exists. Set its end date before starting a new one.");
+      return;
+    }
+
+    periods.push({
+      id: Date.now(),
+      start,
+      end: null
+    });
+
+    sortPeriods();
+    saveToStorage();
+
+    const startDate = parseDate(start);
+
+    currentMonth = startDate.getMonth();
+    currentYear = startDate.getFullYear();
+
+    document.getElementById("startDate").value = getTodayDateString();
+    document.getElementById("endDate").value = "";
+
+    refreshUI();
+  }
+
+  // =========================
+  // STATS UI
+  // =========================
+
+  function updateStats() {
+    const cycleInfo = getCycleInfo();
+    const lengthInfo = getLengthInfo();
+
+    const avgCycleEl = document.getElementById("avgCycle");
+    const avgCycleNoteEl = document.getElementById("avgCycleNote");
+    const avgLengthEl = document.getElementById("avgLength");
+    const avgLengthNoteEl = document.getElementById("avgLengthNote");
+
+    if (cycleInfo.average === null) {
+      avgCycleEl.textContent = "Add at least 2 entries";
+      avgCycleNoteEl.textContent = "Nothing here yet";
+    } else {
+      avgCycleEl.textContent = `${cycleInfo.average} days`;
+      avgCycleNoteEl.textContent =
+        `Based on ${cycleInfo.count} cycle${cycleInfo.count === 1 ? "" : "s"}.`;
+    }
+
+    if (lengthInfo.average === null) {
+      avgLengthEl.textContent = "Add a completed period";
+      avgLengthNoteEl.textContent = "Nothing here yet";
+    } else {
+      avgLengthEl.textContent = `${lengthInfo.average} days`;
+      avgLengthNoteEl.textContent =
+        `Based on ${lengthInfo.count} record${lengthInfo.count === 1 ? "" : "s"}.`;
+    }
+
+    if (periods.length > 0) {
+      const lastStart = parseDate(periods[periods.length - 1].start);
+
+      const cycleAverage =
+        cycleInfo.average !== null
+          ? cycleInfo.average
+          : 28;
+
+      const next = new Date(lastStart);
+      next.setDate(next.getDate() + cycleAverage);
+
+      document.getElementById("nextPeriod").textContent =
+        next.toDateString();
+    } else {
+      document.getElementById("nextPeriod").textContent = "-";
+    }
+  }
+
+  // =========================
+  // NOTES
+  // =========================
+
+  function getNote(dateStr) {
+    return notes[dateStr] || null;
+  }
+
+  function persistCurrentNote() {
+    if (!currentNoteDate) return;
+
+    const text = document.getElementById("noteText").value.trim();
+    const color = document.getElementById("noteColor").value || getDefaultNoteColor();
+
+    if (!text) {
+      delete notes[currentNoteDate];
+    } else {
+      notes[currentNoteDate] = { text, color };
+    }
+
+    saveNotesToStorage();
+    refreshUI();
+  }
+
+  function openNoteModal(dateStr) {
+    currentNoteDate = dateStr;
+
+    const note = getNote(dateStr);
+    const noteText = document.getElementById("noteText");
+
+    document.getElementById("noteDateLabel").textContent =
+      `${formatDate(dateStr)} — add a note, or tap “Set day” to copy this date into the active period field.`;
+
+    noteText.value = note ? (note.text || "") : "";
+
+    const initialColor = note && note.color ? note.color : getDefaultNoteColor();
+    syncNoteColorUI(initialColor);
+
+    const overlay = document.getElementById("noteOverlay");
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+
+    setTimeout(() => noteText.focus(), 0);
+  }
+
+  function closeNoteModal() {
+    const overlay = document.getElementById("noteOverlay");
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+    currentNoteDate = null;
+  }
+
+  function deleteCurrentNote() {
+    if (!currentNoteDate) return;
+
+    if (notes[currentNoteDate]) {
+      delete notes[currentNoteDate];
+      saveNotesToStorage();
+      closeNoteModal();
+      refreshUI();
+    } else {
+      closeNoteModal();
+    }
+  }
+
+  function setCurrentDayIntoActiveField() {
+    if (!currentNoteDate) return;
+
+    const activeInput = document.getElementById(activeInputId);
+    if (!activeInput) return;
+
+    activeInput.value = currentNoteDate;
+
+    if (activeInputId === "startDate") {
+      setActiveDateInput("endDate");
+      document.getElementById("endDate").focus();
+    } else {
+      activeInput.focus();
+    }
+
+    closeNoteModal();
+  }
+
+  // =========================
+  // PREDICTION
+  // =========================
+
+  function getPredictionRanges() {
+    const ranges = [];
+
+    if (periods.length === 0) {
+      return ranges;
+    }
+
+    const cycleInfo = getCycleInfo();
+    const lengthInfo = getLengthInfo();
+
+    const avgCycle =
+      cycleInfo.average !== null
+        ? cycleInfo.average
+        : 28;
+
+    const avgLength =
+      lengthInfo.average !== null
+        ? lengthInfo.average
+        : 5;
+
+    const latest = periods[periods.length - 1];
+    const latestStart = parseDate(latest.start);
+
+    if (!latest.end) {
+      const currentPredStart = new Date(latestStart);
+      currentPredStart.setDate(currentPredStart.getDate() + 1);
+
+      const currentPredEnd = new Date(latestStart);
+      currentPredEnd.setDate(currentPredEnd.getDate() + avgLength - 1);
+
+      if (currentPredEnd >= currentPredStart) {
+        ranges.push({
+          start: currentPredStart,
+          end: currentPredEnd,
+          type: "current"
+        });
+      }
+    }
+
+    const nextStart = new Date(latestStart);
+    nextStart.setDate(nextStart.getDate() + avgCycle);
+
+    const nextEnd = new Date(nextStart);
+    nextEnd.setDate(nextEnd.getDate() + avgLength - 1);
+
+    ranges.push({
+      start: nextStart,
+      end: nextEnd,
+      type: "future"
+    });
+
+    return ranges;
+  }
+
+  // =========================
+  // CALENDAR
+  // =========================
+
+  let currentMonth = new Date().getMonth();
+  let currentYear = new Date().getFullYear();
+
+  function changeMonth(direction) {
+    currentMonth += direction;
+
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    const calendar = document.getElementById("calendar");
+    calendar.innerHTML = "";
+
+    const monthNames = [
+      "January","February","March","April",
+      "May","June","July","August",
+      "September","October","November","December"
+    ];
+
+    document.getElementById("calendarTitle").textContent =
+      monthNames[currentMonth] + " " + currentYear;
+
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+
+    const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    dayNames.forEach(day => {
+      const el = document.createElement("div");
+      el.className = "day-name";
+      el.textContent = day;
+      calendar.appendChild(el);
+    });
+
+    for (let i = 0; i < firstDay.getDay(); i++) {
+      const empty = document.createElement("div");
+      empty.className = "empty-day";
+      calendar.appendChild(empty);
+    }
+
+    const predictedRanges = getPredictionRanges();
+
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const currentDate = normalizeDate(
+        new Date(currentYear, currentMonth, day)
+      );
+
+      const dateKey = formatDateInput(currentDate);
+      const note = getNote(dateKey);
+
+      const cell = document.createElement("div");
+      cell.className = "day";
+      cell.setAttribute("role", "button");
+      cell.setAttribute("tabindex", "0");
+      cell.setAttribute("aria-label", `${currentDate.toDateString()}${note ? `, note present` : ""}`);
+      cell.title = note ? note.text : "Tap to add or view a note";
+
+      const number = document.createElement("div");
+      number.className = "day-number";
+      number.textContent = day;
+      cell.appendChild(number);
+
+      if (note) {
+        cell.classList.add("has-note");
+
+        const dot = document.createElement("span");
+        dot.className = "note-dot";
+        dot.style.background = note.color || getDefaultNoteColor();
+        dot.title = note.text;
+        cell.appendChild(dot);
+      }
+
+      cell.onclick = () => {
+        openNoteModal(dateKey);
+      };
+
+      cell.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openNoteModal(dateKey);
+        }
+      });
+
+      if (currentDate.toDateString() === getToday().toDateString()) {
+        cell.classList.add("today");
+      }
+
+      periods.forEach(period => {
+        const start = parseDate(period.start);
+        let end;
+
+        if (!period.end) {
+          end = getToday();
+
+          if (isDateInRange(currentDate, start, end)) {
+            cell.classList.add("ongoing");
+          }
+        } else {
+          end = parseDate(period.end);
+
+          if (isDateInRange(currentDate, start, end)) {
+            cell.classList.add("period-day");
+          }
+        }
+      });
+
+      predictedRanges.forEach(range => {
+        if (isDateInRange(currentDate, range.start, range.end)) {
+          if (
+            !cell.classList.contains("period-day") &&
+            !cell.classList.contains("ongoing")
+          ) {
+            cell.classList.add("predicted");
+          }
+        }
+      });
+
+      calendar.appendChild(cell);
+    }
+  }
+
+  // =========================
+  // HISTORY
+  // =========================
+
+  function renderHistory() {
+    const history = document.getElementById("history");
+    history.innerHTML = "";
+
+    if (periods.length === 0) {
+      history.innerHTML = "<p>No saved entries yet.</p>";
+      return;
+    }
+
+    periods.forEach(period => {
+      const div = document.createElement("div");
+      div.className = "history-item";
+
+      div.innerHTML = `
+        <strong>${period.end ? "Start" : "Started"}:</strong> ${formatDate(period.start)}<br>
+        <strong>End:</strong> ${
+          period.end
+            ? formatDate(period.end)
+            : "Ongoing / not added yet"
+        }
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "history-actions";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "small-btn secondary-btn";
+      deleteBtn.textContent = "Delete";
+
+      deleteBtn.onclick = () => {
+        if (confirm("Delete this entry?")) {
+          periods = periods.filter(p => p.id !== period.id);
+          saveToStorage();
+          refreshUI();
+        }
+      };
+
+      actions.appendChild(deleteBtn);
+
+      div.appendChild(actions);
+      history.appendChild(div);
+    });
+  }
+
+  // =========================
+  // CLEAR
+  // =========================
+
+  function clearAllData() {
+    if (confirm("Delete all saved period data and notes?")) {
+      periods = [];
+      notes = {};
+
+      localStorage.removeItem("periods");
+      localStorage.removeItem(NOTES_KEY);
+
+      currentMonth = new Date().getMonth();
+      currentYear = new Date().getFullYear();
+
+      refreshUI();
+    }
+  }
+
+  // =========================
+  // CSV EXPORT / IMPORT
+  // =========================
+
+  function escapeCsvCell(value) {
+    const str = String(value ?? "");
+    if (/[",\n\r]/.test(str)) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }
+
+  function buildCsv() {
+    const rows = [
+      ["record_type", "id", "date", "start", "end", "text", "color"]
+    ];
+
+    periods.forEach(period => {
+      rows.push([
+        "period",
+        period.id ?? "",
+        "",
+        period.start ?? "",
+        period.end ?? "",
+        "",
+        ""
+      ]);
+    });
+
+    Object.keys(notes)
+      .sort()
+      .forEach(dateKey => {
+        const note = notes[dateKey];
+        rows.push([
+          "note",
+          "",
+          dateKey,
+          "",
+          "",
+          note?.text ?? "",
+          note?.color ?? ""
+        ]);
+      });
+
+    return "\uFEFF" + rows
+      .map(row => row.map(escapeCsvCell).join(","))
+      .join("\n");
+  }
+
+  function exportCsv() {
+    const csv = buildCsv();
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `period-tracker-backup-${getTodayDateString()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function parseCsv(text) {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+
+      if (inQuotes) {
+        if (ch === '"' && next === '"') {
+          cell += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = false;
+        } else {
+          cell += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ",") {
+          row.push(cell);
+          cell = "";
+        } else if (ch === "\n") {
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+        } else if (ch === "\r") {
+          continue;
+        } else {
+          cell += ch;
+        }
+      }
+    }
+
+    row.push(cell);
+    if (row.length > 1 || row[0] !== "") {
+      rows.push(row);
+    }
+
+    return rows;
+  }
+
+  function importCsvFile(file) {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const text = String(reader.result || "");
+        const rows = parseCsv(text);
+
+        if (rows.length < 2) {
+          alert("CSV file is empty or invalid.");
+          return;
+        }
+
+        const headers = rows[0].map(h => String(h).trim().toLowerCase());
+        const indexOf = name => headers.indexOf(name);
+
+        const typeIdx = indexOf("record_type");
+        const idIdx = indexOf("id");
+        const dateIdx = indexOf("date");
+        const startIdx = indexOf("start");
+        const endIdx = indexOf("end");
+        const textIdx = indexOf("text");
+        const colorIdx = indexOf("color");
+
+        let importedPeriods = 0;
+        let importedNotes = 0;
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+
+          const get = idx => idx >= 0 ? (row[idx] ?? "").trim() : "";
+
+          const recordType = get(typeIdx).toLowerCase();
+
+          if (recordType === "period") {
+            const start = get(startIdx);
+            const end = get(endIdx) || null;
+
+            if (!start || !parseDate(start)) continue;
+            if (end && parseDate(end) < parseDate(start)) continue;
+
+            const importedId = get(idIdx);
+            const id = importedId ? Number(importedId) || importedId : Date.now() + Math.random();
+
+            const existingIndex = periods.findIndex(p => String(p.id) === String(id));
+            const entry = { id, start, end };
+
+            if (existingIndex >= 0) {
+              periods[existingIndex] = entry;
+            } else {
+              periods.push(entry);
+            }
+
+            importedPeriods++;
+          } else if (recordType === "note") {
+            const date = get(dateIdx);
+            const noteText = get(textIdx);
+            const color = get(colorIdx) || getDefaultNoteColor();
+
+            if (!date || !parseDate(date) || !noteText) continue;
+
+            notes[date] = { text: noteText, color };
+            importedNotes++;
+          }
+        }
+
+        sortPeriods();
+        saveToStorage();
+        saveNotesToStorage();
+        refreshUI();
+
+        alert(`Imported ${importedPeriods} period entr${importedPeriods === 1 ? "y" : "ies"} and ${importedNotes} note${importedNotes === 1 ? "" : "s"}.`);
+      } catch (err) {
+        console.error(err);
+        alert("Could not import that CSV file.");
+      }
+    };
+
+    reader.readAsText(file);
+  }
+
+  // =========================
+  // REFRESH
+  // =========================
+
+  function refreshUI() {
+    applyTheme();
+    updateStats();
+    renderCalendar();
+    renderHistory();
+    setDefaultDates();
+    setActiveDateInput(activeInputId);
+  }
+
+  // =========================
+  // INIT
+  // =========================
+
+  document.getElementById("startDate").addEventListener("focus", () => setActiveDateInput("startDate"));
+  document.getElementById("startDate").addEventListener("click", () => setActiveDateInput("startDate"));
+  document.getElementById("endDate").addEventListener("focus", () => setActiveDateInput("endDate"));
+  document.getElementById("endDate").addEventListener("click", () => setActiveDateInput("endDate"));
+
+  document.getElementById("themeToggle").addEventListener("click", cycleTheme);
+  document.getElementById("accentToggle").addEventListener("click", toggleAccentPopup);
+
+  document.getElementById("hueSlider").addEventListener("input", e => {
+    saveHue(e.target.value);
+  });
+
+  document.addEventListener("click", e => {
+    const popup = document.getElementById("accentPopup");
+    const button = document.getElementById("accentToggle");
+
+    if (
+      popup &&
+      button &&
+      !popup.contains(e.target) &&
+      !button.contains(e.target)
+    ) {
+      popup.classList.remove("show");
+    }
+  });
+
+  document.getElementById("closeNoteBtn").addEventListener("click", closeNoteModal);
+  document.getElementById("deleteNoteBtn").addEventListener("click", deleteCurrentNote);
+  document.getElementById("setDayBtn").addEventListener("click", setCurrentDayIntoActiveField);
+
+  document.getElementById("noteOverlay").addEventListener("click", e => {
+    if (e.target.id === "noteOverlay") {
+      closeNoteModal();
+    }
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      const overlay = document.getElementById("noteOverlay");
+      if (overlay.classList.contains("show")) {
+        closeNoteModal();
+      }
+    }
+  });
+
+  document.getElementById("noteText").addEventListener("input", persistCurrentNote);
+  document.getElementById("noteColor").addEventListener("input", e => {
+    syncNoteColorUI(e.target.value);
+    persistCurrentNote();
+  });
+  document.getElementById("noteHue").addEventListener("input", updateMobileColorFromSliders);
+  document.getElementById("noteBrightness").addEventListener("input", updateMobileColorFromSliders);
+
+  document.getElementById("exportCsvBtn").addEventListener("click", exportCsv);
+  document.getElementById("importCsvBtn").addEventListener("click", () => {
+    document.getElementById("csvFileInput").click();
+  });
+
+  document.getElementById("csvFileInput").addEventListener("change", e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      importCsvFile(file);
+    }
+    e.target.value = "";
+  });
+
+  sortPeriods();
+  applyHue(getStoredHue());
+  applyTheme();
+  watchSystemTheme();
+  refreshUI();
+  syncNoteColorUI(getDefaultNoteColor());
+</script>
+
+</body>
+</html>
